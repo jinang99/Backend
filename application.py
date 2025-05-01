@@ -92,9 +92,35 @@ def insert_data_into_db(payload):
     NOTE: Our autograder will automatically insert data into the DB automatically keeping in mind the explained SCHEMA, you dont have to insert your own data.
     """
     create_db_table()
-    # TODO: Implement the database call    
-    
-    raise NotImplementedError("Database insert function not implemented.")
+
+    # Establish database connection
+    connection = pymysql.connect(
+        host=os.environ.get('DB_HOST'),
+        user=os.environ.get('DB_USER'),
+        password=os.environ.get('DB_PASSWORD'),
+        database=os.environ.get('DB_NAME'),
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+    try:
+        with connection.cursor() as cursor:
+            # Insert the event data
+            insert_query = """
+            INSERT INTO events (title, description, date, location)
+            VALUES (%s, %s, %s, %s);
+            """
+            cursor.execute(insert_query, (
+                payload['title'],
+                payload['description'],
+                payload['date'],
+                payload['location']
+            ))
+
+        # Commit the transaction
+        connection.commit()
+    finally:
+        # Close the database connection
+        connection.close()
 
 #Database Function Stub
 def fetch_data_from_db():
@@ -102,9 +128,25 @@ def fetch_data_from_db():
     Stub for database communication.
     Implement this function to fetch your data from the database.
     """
-    # TODO: Implement the database call
-    
-    raise NotImplementedError("Database fetch function not implemented.")
+    # Establish database connection
+    connection = pymysql.connect(
+        host=os.environ.get('DB_HOST'),
+        user=os.environ.get('DB_USER'),
+        password=os.environ.get('DB_PASSWORD'),
+        database=os.environ.get('DB_NAME'),
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+    try:
+        with connection.cursor() as cursor:
+            # Retrieve all events ordered by date
+            select_query = "SELECT * FROM events ORDER BY date ASC;"
+            cursor.execute(select_query)
+            events = cursor.fetchall()
+            return events
+    finally:
+        # Close the database connection
+        connection.close()
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
